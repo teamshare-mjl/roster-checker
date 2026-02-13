@@ -1,3 +1,35 @@
+const CBS_URL_PATTERN = /^https:\/\/[a-z0-9]+\.baseball\.cbssports\.com/;
+
+function updateIcon(tabId, url) {
+  const isActive = CBS_URL_PATTERN.test(url || "");
+  const state = isActive ? "active" : "inactive";
+  chrome.action.setIcon({
+    tabId,
+    path: {
+      16: `icons/roster_${state}_16.png`,
+      48: `icons/roster_${state}_48.png`,
+      128: `icons/roster_${state}_128.png`
+    }
+  });
+  chrome.action.setTitle({
+    tabId,
+    title: isActive
+      ? "Roster Checker"
+      : "Roster Checker — navigate to a CBS Sports fantasy baseball league to use"
+  });
+}
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url || changeInfo.status === "complete") {
+    updateIcon(tabId, tab.url);
+  }
+});
+
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const tab = await chrome.tabs.get(activeInfo.tabId);
+  updateIcon(tab.id, tab.url);
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "runCheck") {
     runCheck(message.baseUrl, message.config);
